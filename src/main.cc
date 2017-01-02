@@ -1,9 +1,47 @@
+#include <game.hh>
+
 #include <SDL.h>
 #include <iostream>
 
-static void gameLoop()
+static bool gameLoop(uint32_t msSinceLast)
 {
+	static unsigned int keys = Input::NONE;
+	SDL_Event ev;
 
+	while (SDL_PollEvent(&ev))
+	{
+		if (ev.type == SDL_QUIT)
+		{
+			return false;
+		}
+
+		if (ev.type == SDL_KEYDOWN)
+		{
+			if (ev.key.keysym.sym == SDLK_UP)
+				keys |= Input::UP;
+			if (ev.key.keysym.sym == SDLK_LEFT)
+				keys |= Input::LEFT;
+			if (ev.key.keysym.sym == SDLK_RIGHT)
+				keys |= Input::RIGHT;
+			if (ev.key.keysym.sym == SDLK_q)
+				return false;
+		}
+		if (ev.type == SDL_KEYUP)
+		{
+			if (ev.key.keysym.sym == SDLK_UP)
+				keys &= ~Input::UP;
+			if (ev.key.keysym.sym == SDLK_LEFT)
+				keys &= ~Input::LEFT;
+			if (ev.key.keysym.sym == SDLK_RIGHT)
+				keys &= ~Input::RIGHT;
+		}
+	}
+
+	handleInput(keys);
+	update(msSinceLast);
+	display();
+
+	return true;
 }
 
 int main(int argc, const char *argv[])
@@ -15,7 +53,7 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	SDL_Window *win = SDL_CreateWindow("Hello World!", 100, 100, 640, 480, SDL_WINDOW_SHOWN);
+	SDL_Window *win = SDL_CreateWindow("Hello World!", 100, 100, 1800, 1500, SDL_WINDOW_SHOWN);
 	if (win == nullptr)
 	{
 		std::cout << "SDL_CreateWindow Error: " << SDL_GetError() << std::endl;
@@ -33,10 +71,21 @@ int main(int argc, const char *argv[])
 		return 1;
 	}
 
-	SDL_RenderClear(ren);
-	SDL_RenderPresent(ren);
+	init(win, ren);
 
-	gameLoop();
+	uint32_t start = SDL_GetTicks();
+	while (1)
+	{
+		uint32_t now = SDL_GetTicks();
+		if (!gameLoop(now - start))
+			break;
+
+		start = now;
+
+		SDL_RenderPresent(ren);
+		SDL_Delay(20);
+		SDL_RenderClear(ren);
+	}
 
 	SDL_DestroyRenderer(ren);
 	SDL_DestroyWindow(win);

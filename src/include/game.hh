@@ -12,6 +12,12 @@ struct Vector
 	double dy{0};
 };
 
+struct Line
+{
+	struct Point begin;
+	struct Point end;
+};
+
 class Lander
 {
 public:

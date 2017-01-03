@@ -55,15 +55,16 @@ public:
 
 		SDL_Rect dst;
 		dst.x = m_lander.m_position.x;
-		dst.y = windowWidth - m_lander.m_position.y;
+		dst.y = windowHeight - m_lander.m_position.y;
 		dst.h = m_landerSize[1];
 		dst.w = m_landerSize[0];
 
 		SDL_SetRenderDrawColor(m_renderer, 0,0,0, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(m_renderer);
 
-		drawStars();
-		drawLandscape();
+		drawStars(windowHeight);
+		drawLandscape(windowHeight);
+		drawLandingPads(windowHeight);
 
 		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
 	}
@@ -90,6 +91,14 @@ public:
 		m_lander.m_position.y = 800;
 		m_lander.m_angle = 0;
 
+		generateLandingPads(windowWidth, windowHeight);
+		generateLandscape(windowWidth, windowHeight,
+				0, m_pads[0].begin.x, windowHeight * 0.25, m_pads[0].begin.y);
+		generateLandscape(windowWidth, windowHeight,
+				m_pads[0].end.x, m_pads[1].begin.x, m_pads[0].end.y, m_pads[1].begin.y);
+		generateLandscape(windowWidth, windowHeight,
+				m_pads[1].end.x, windowWidth, m_pads[0].end.y, windowHeight * 0.25);
+
 		// Stars
 		for (unsigned i = 0; i < 20; i++)
 		{
@@ -101,17 +110,36 @@ public:
 			m_stars.push_back(star);
 		}
 
-		generateLandscape(windowWidth, windowHeight, 0, windowWidth);
 	}
 
 private:
-	void generateLandscape(int windowWidth, int windowHeight, unsigned int startX, unsigned int endX)
+	void generateLandingPads(int windowWidth, int windowHeight)
 	{
-		unsigned int y = windowHeight * 0.75;
+		Line start, end;
+
+		start.begin.x = windowWidth * 0.10;
+		start.begin.y = windowHeight * 0.20;
+		start.end.x = start.begin.x + m_landerSize[0] * 2;
+		start.end.y = start.begin.y;
+
+		end.begin.x = windowWidth - m_landerSize[0] * 3;
+		end.begin.y = windowHeight * 0.20;
+		end.end.x = end.begin.x + m_landerSize[0] * 2;
+		end.end.y = end.begin.y;
+
+		m_pads.push_back(start);
+		m_pads.push_back(end);
+	}
+
+	void generateLandscape(int windowWidth, int windowHeight, unsigned int startX, unsigned int endX,
+			unsigned int startY, unsigned int endY)
+	{
 		unsigned int x = startX;
+		unsigned int y = startY;
 		unsigned int slopeHeight = 160;
 
-		unsigned int nLines = (endX - startX) / 20;
+		unsigned int nLines = abs(endX - startX) / 20;
+		unsigned int lineWidth = abs(endX - startX) / nLines;
 
 		for (auto i = 0; i < nLines; i++)
 		{
@@ -122,16 +150,22 @@ private:
 
 			y = y + slopeHeight / 2 - rand() % slopeHeight;
 
-			line.end.x = line.begin.x + nLines;
+			// Last one
+			if (i == nLines - 1)
+			{
+				y = endY;
+			}
+
+			line.end.x = line.begin.x + lineWidth;
 			line.end.y = y;
 
 			m_landscape.push_back(line);
 
-			x += nLines;
+			x += lineWidth;
 		}
 	}
 
-	void drawStars()
+	void drawStars(unsigned int windowHeight)
 	{
 		SDL_SetRenderDrawColor(m_renderer, 255,255,255, SDL_ALPHA_OPAQUE);
 
@@ -141,14 +175,40 @@ private:
 		}
 	}
 
-	void drawLandscape()
+	void drawLandscape(unsigned int windowHeight)
 	{
 		SDL_SetRenderDrawColor(m_renderer, 0,255,0, SDL_ALPHA_OPAQUE);
 
 		for (auto &line : m_landscape)
 		{
-			SDL_RenderDrawLine(m_renderer, line.begin.x, line.begin.y, line.end.x, line.end.y);
+			SDL_RenderDrawLine(m_renderer, line.begin.x, windowHeight - line.begin.y,
+					line.end.x, windowHeight - line.end.y);
 		}
+	}
+
+	void drawLandingPads(unsigned int windowHeight)
+	{
+		SDL_SetRenderDrawColor(m_renderer, 0,0,128, SDL_ALPHA_OPAQUE);
+
+		for (auto &line : m_pads)
+		{
+			SDL_RenderDrawLine(m_renderer, line.begin.x, windowHeight - line.begin.y,
+					line.end.x, windowHeight - line.end.y);
+		}
+	}
+
+
+	Line *findLineForPoint(const Point &point, std::vector<Line> &lines)
+	{
+		for (auto &line : lines)
+		{
+			if (point.x >= line.begin.x && point.x < line.end.x)
+			{
+				return &line;
+			}
+		}
+
+		return nullptr;
 	}
 
 	void updateLander(double secsSinceLast)
@@ -156,6 +216,17 @@ private:
 		m_lander.m_angle = (m_lander.m_angle + m_turning * 3) % 360;
 
 		double angleRad = (m_lander.m_angle / 360.0) * 2 * M_PI;
+
+		if (landerIsOnPad())
+		{
+			m_lander.m_velocity.dx = 0;
+			m_lander.m_velocity.dy = 0;
+			m_lander.m_angle = 0;
+		}
+		else
+		{
+			m_lander.m_velocity.dy += secsSinceLast * gravity;
+		}
 
 		if (m_acceleration)
 		{
@@ -166,7 +237,31 @@ private:
 			m_lander.m_velocity.dx += dx * secsSinceLast * accelerationPerSecond;
 		}
 
-		addGravity(secsSinceLast, m_lander.m_position, m_lander.m_velocity);
+		m_lander.m_position.y += m_lander.m_velocity.dy;
+		m_lander.m_position.x += m_lander.m_velocity.dx;
+	}
+
+	bool landerIsOnPad()
+	{
+		Point end;
+
+		end.x = m_lander.m_position.x + m_landerSize[0];
+		end.y = m_lander.m_position.y;
+
+		Line *first = findLineForPoint(m_lander.m_position, m_pads);
+		Line *second = findLineForPoint(end, m_pads);
+
+		if (!first || !second)
+		{
+			return false;
+		}
+
+		if (abs((m_lander.m_position.y - m_landerSize[1]) - first->begin.y) < 5)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 
@@ -175,7 +270,6 @@ private:
 		velocity.dy += secsSinceLast * gravity;
 		pos.y += velocity.dy;
 		pos.x += velocity.dx;
-
 	}
 
 	Lander m_lander;
@@ -188,6 +282,7 @@ private:
 	std::vector<struct Line> m_landscape;
 
 	std::vector<struct Point> m_stars;
+	std::vector<struct Line> m_pads;
 
 
 	unsigned int m_landerSize[2]{91,299};

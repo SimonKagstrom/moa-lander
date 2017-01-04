@@ -1,6 +1,7 @@
 #include <game.hh>
 
 #include <vector>
+#include <deque>
 
 #include <stdio.h>
 #include <SDL.h>
@@ -45,6 +46,7 @@ public:
 		double secsSinceLast = msSinceLast / 1000.0;
 
 		updateLander(secsSinceLast);
+		updateParticles(secsSinceLast);
 	}
 
 	void display()
@@ -65,6 +67,7 @@ public:
 		drawStars(windowHeight);
 		drawLandscape(windowHeight);
 		drawLandingPads(windowHeight);
+		drawParticles(windowHeight);
 
 		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
 	}
@@ -165,6 +168,26 @@ private:
 		}
 	}
 
+
+	void addParticle(double angle, const Point &where, double maxSpeed)
+	{
+		if (m_particles.size() > 30)
+		{
+			return;
+		}
+
+		Particle p;
+
+		double angleRad = (angle / 360.0) * 2 * M_PI;
+
+		p.m_position = where;
+		p.m_velocity.dx = sin(angleRad) * maxSpeed;
+		p.m_velocity.dy = cos(angleRad) * maxSpeed;
+		p.m_secsToLive = 1;
+
+		m_particles.push_back(p);
+	}
+
 	void drawStars(unsigned int windowHeight)
 	{
 		SDL_SetRenderDrawColor(m_renderer, 255,255,255, SDL_ALPHA_OPAQUE);
@@ -172,6 +195,17 @@ private:
 		for (auto &star : m_stars)
 		{
 			SDL_RenderDrawPoint(m_renderer, star.x, star.y);
+		}
+	}
+
+	void drawParticles(unsigned int windowHeight)
+	{
+		SDL_SetRenderDrawColor(m_renderer, 0,255,255, SDL_ALPHA_OPAQUE);
+
+		for (auto &particle : m_particles)
+		{
+			SDL_RenderDrawPoint(m_renderer, particle.m_position.x,
+					windowHeight - particle.m_position.y);
 		}
 	}
 
@@ -211,6 +245,30 @@ private:
 		return nullptr;
 	}
 
+	void updateParticles(double secsSinceLast)
+	{
+		bool dequeueFront = false;
+
+		for (auto &particle : m_particles)
+		{
+			particle.m_secsToLive -= secsSinceLast;
+			if (particle.m_secsToLive < 0)
+			{
+				dequeueFront = true;
+			}
+
+			particle.m_velocity.dy += secsSinceLast * gravity;
+			particle.m_position.y += particle.m_velocity.dy;
+			particle.m_position.x += particle.m_velocity.dx;
+		}
+
+		if (dequeueFront)
+		{
+			m_particles.pop_front();
+			printf("BORT!\n");
+		}
+	}
+
 	void updateLander(double secsSinceLast)
 	{
 		m_lander.m_angle = (m_lander.m_angle + m_turning * 3) % 360;
@@ -219,6 +277,11 @@ private:
 
 		if (landerIsOnPad())
 		{
+			if (abs(m_lander.m_velocity.dy) > abs(gravity)/2)
+			{
+				printf("Kaboom! %.3f\n", m_lander.m_velocity.dy);
+			}
+
 			m_lander.m_velocity.dx = 0;
 			m_lander.m_velocity.dy = 0;
 			m_lander.m_angle = 0;
@@ -235,6 +298,8 @@ private:
 
 			m_lander.m_velocity.dy += dy * secsSinceLast * accelerationPerSecond;
 			m_lander.m_velocity.dx += dx * secsSinceLast * accelerationPerSecond;
+
+			addParticle(m_lander.m_angle + 180, {m_lander.m_position.x, m_lander.m_position.y}, 8);
 		}
 
 		m_lander.m_position.y += m_lander.m_velocity.dy;
@@ -284,6 +349,7 @@ private:
 	std::vector<struct Point> m_stars;
 	std::vector<struct Line> m_pads;
 
+	std::deque<Particle> m_particles;
 
 	unsigned int m_landerSize[2]{91,299};
 };

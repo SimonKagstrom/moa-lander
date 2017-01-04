@@ -26,6 +26,14 @@ public:
 	int m_angle{0};
 };
 
+class Particle
+{
+public:
+	Point m_position;
+	Vector m_velocity;
+	double m_secsToLive;
+};
+
 enum Input
 {
 	NONE = 0,

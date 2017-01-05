@@ -70,6 +70,9 @@ public:
 		drawParticles(windowHeight);
 
 		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
+		SDL_SetRenderDrawColor(m_renderer, 255,255,0, SDL_ALPHA_OPAQUE);
+
+		SDL_RenderDrawPoint(m_renderer, dst.x, dst.y);
 	}
 
 	void init(SDL_Window *win, SDL_Renderer *ren)
@@ -90,10 +93,6 @@ public:
 
 		m_landerSprite = SDL_CreateTextureFromSurface(m_renderer, bmp);
 
-		m_lander.m_position.x = 100;
-		m_lander.m_position.y = 800;
-		m_lander.m_angle = 0;
-
 		generateLandingPads(windowWidth, windowHeight);
 		generateLandscape(windowWidth, windowHeight,
 				0, m_pads[0].begin.x, windowHeight * 0.25, m_pads[0].begin.y);
@@ -101,6 +100,10 @@ public:
 				m_pads[0].end.x, m_pads[1].begin.x, m_pads[0].end.y, m_pads[1].begin.y);
 		generateLandscape(windowWidth, windowHeight,
 				m_pads[1].end.x, windowWidth, m_pads[0].end.y, windowHeight * 0.25);
+
+		m_lander.m_position = {m_pads[0].begin.x + (m_pads[0].end.x - m_pads[0].begin.x) / 3,
+				m_pads[0].begin.y + m_landerSize[1]};
+		m_lander.m_angle = 0;
 
 		// Stars
 		for (unsigned i = 0; i < 20; i++)
@@ -177,6 +180,9 @@ private:
 		}
 
 		Particle p;
+
+		angle = angle + 20 - rand() % 40;
+		maxSpeed = maxSpeed + 2 - rand() % 4;
 
 		double angleRad = (angle / 360.0) * 2 * M_PI;
 
@@ -299,11 +305,26 @@ private:
 			m_lander.m_velocity.dy += dy * secsSinceLast * accelerationPerSecond;
 			m_lander.m_velocity.dx += dx * secsSinceLast * accelerationPerSecond;
 
-			addParticle(m_lander.m_angle + 180, {m_lander.m_position.x, m_lander.m_position.y}, 8);
+			addThrustFire();
 		}
 
 		m_lander.m_position.y += m_lander.m_velocity.dy;
 		m_lander.m_position.x += m_lander.m_velocity.dx;
+	}
+
+	void addThrustFire()
+	{
+		Point particlePosition{m_lander.m_position.x, m_lander.m_position.y};
+		auto angle = m_lander.m_angle + 180;
+		auto angleRad = (angle / 360.0) * 2 * M_PI;
+
+		double dx = sin(angleRad);
+		double dy = cos(angleRad);
+
+		particlePosition.x = (m_lander.m_position.x + m_landerSize[0] / 2) + dx * m_landerSize[0];
+		particlePosition.y = m_lander.m_position.y + dy * m_landerSize[1];
+
+		addParticle(angle, particlePosition, 4);
 	}
 
 	bool landerIsOnPad()

@@ -162,7 +162,10 @@ private:
 			line.begin.x = x;
 			line.begin.y = y;
 
-			y = y + slopeHeight / 2 - rand() % slopeHeight;
+			do
+			{
+				y = y - slopeHeight / 2 + rand() % slopeHeight;
+			} while (y < 0 || y > windowHeight / 2);
 
 			// Last one
 			if (i == nLines - 1)

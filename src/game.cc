@@ -121,20 +121,26 @@ public:
 				m_pads[0].begin.y + m_landerSize[1]};
 		m_lander.m_angle = 0;
 
+		generateStars(windowWidth, windowHeight);
+	}
+
+private:
+	void generateStars(unsigned int windowWidth, unsigned int windowHeight)
+	{
 		// Stars
 		for (unsigned i = 0; i < 20; i++)
 		{
 			Point star;
 
-			star.x = rand() % windowWidth;
-			star.y = rand() % windowHeight;
+			do
+			{
+				star.x = rand() % windowWidth;
+				star.y = rand() % windowHeight;
+			} while (pointIsBelowLandscape(star));
 
 			m_stars.push_back(star);
 		}
-
 	}
-
-private:
 
 	void generateLandingPads(int windowWidth, int windowHeight)
 	{
@@ -220,7 +226,7 @@ private:
 
 		for (auto &star : m_stars)
 		{
-			SDL_RenderDrawPoint(m_renderer, star.x, star.y);
+			SDL_RenderDrawPoint(m_renderer, star.x, windowHeight - star.y);
 		}
 	}
 
@@ -403,6 +409,31 @@ private:
 		return false;
 	}
 
+	bool pointIsBelowLandscape(const Point &point)
+	{
+		Line *p = findLineForPoint(point, m_landscape);
+
+		if (!p)
+		{
+			// Pads?
+			p = findLineForPoint(point, m_pads);
+
+			if (!p)
+			{
+				return false;
+			}
+		}
+
+		double highestY = fmax(p->begin.y, p->end.y);
+
+		printf("XXX: %.2f vs %.2f\n", highestY, point.y);
+		if (point.y - highestY > 0)
+		{
+			return false;
+		}
+
+		return true;
+	}
 
 	void addGravity(double secsSinceLast, Point &pos, Vector &velocity)
 	{

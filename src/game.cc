@@ -340,6 +340,12 @@ private:
 				return;
 			}
 		}
+		else if (landerIsOnLandscape())
+		{
+			m_lander.m_velocity.dy = 0; // TMP!
+			explode();
+			return;
+		}
 		else
 		{
 			m_lander.m_velocity.dy += secsSinceLast * gravity;
@@ -409,6 +415,25 @@ private:
 		return false;
 	}
 
+	bool landerIsOnLandscape()
+	{
+		Point upLeft{m_lander.m_position.x, m_lander.m_position.y};
+		Point upRight{m_lander.m_position.x + m_landerSize[0], m_lander.m_position.y};
+		Point downLeft{m_lander.m_position.x, m_lander.m_position.y - m_landerSize[1]};
+		Point downRight{m_lander.m_position.x + m_landerSize[0], m_lander.m_position.y - m_landerSize[1]};
+
+		if (pointIsBelowLandscape(upLeft) ||
+				pointIsBelowLandscape(upRight) ||
+				pointIsBelowLandscape(downLeft) ||
+				pointIsBelowLandscape(downRight)
+				)
+		{
+			return true;
+		}
+
+		return false;
+	}
+
 	bool pointIsBelowLandscape(const Point &point)
 	{
 		Line *p = findLineForPoint(point, m_landscape);
@@ -426,7 +451,6 @@ private:
 
 		double highestY = fmax(p->begin.y, p->end.y);
 
-		printf("XXX: %.2f vs %.2f\n", highestY, point.y);
 		if (point.y - highestY > 0)
 		{
 			return false;

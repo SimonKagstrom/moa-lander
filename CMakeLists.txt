@@ -5,6 +5,16 @@ project (moa-lander)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 find_package(SDL2 REQUIRED)
 
+add_custom_command(
+   OUTPUT lander.bmp
+   COMMAND convert ${PROJECT_SOURCE_DIR}/lander.xcf lander.bmp
+)
+add_custom_command(
+   OUTPUT sparks.bmp
+   COMMAND convert ${PROJECT_SOURCE_DIR}/sparks.xcf sparks.bmp
+)
+
+
 include_directories(
 	${SDL2_INCLUDE_DIR}
 	${PROJECT_SOURCE_DIR}/src/include
@@ -16,6 +26,9 @@ add_executable(moa-lander
 	src/main.cc
 	src/game.cc
 )
+
+set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/lander.bmp)
+set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/sparks.bmp)
 
 target_link_libraries(moa-lander ${SDL2_LIBRARY})
 

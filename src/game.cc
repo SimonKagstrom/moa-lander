@@ -148,12 +148,12 @@ private:
 		m_pads.push_back(end);
 	}
 
-	void generateLandscape(int windowWidth, int windowHeight, unsigned int startX, unsigned int endX,
-			unsigned int startY, unsigned int endY)
+	void generateLandscape(int windowWidth, int windowHeight, int startX, int endX,
+			int startY, int endY)
 	{
-		unsigned int x = startX;
-		unsigned int y = startY;
-		unsigned int slopeHeight = 160;
+		int x = startX;
+		int y = startY;
+		int slopeHeight = 160;
 
 		unsigned int nLines = abs(endX - startX) / 20;
 		unsigned int lineWidth = abs(endX - startX) / nLines;
@@ -300,7 +300,7 @@ private:
 
 		if (landerIsOnPad())
 		{
-			if (abs(m_lander.m_velocity.dy) > abs(gravity)/2)
+			if (fabs(m_lander.m_velocity.dy) > fabs(gravity)/2)
 			{
 				printf("Kaboom! %.3f\n", m_lander.m_velocity.dy);
 			}
@@ -359,7 +359,7 @@ private:
 			return false;
 		}
 
-		if (abs((m_lander.m_position.y - m_landerSize[1]) - first->begin.y) < 5)
+		if (fabs((m_lander.m_position.y - m_landerSize[1]) - first->begin.y) < 5)
 		{
 			return true;
 		}

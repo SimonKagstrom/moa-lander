@@ -70,9 +70,6 @@ public:
 		drawParticles(windowHeight);
 
 		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
-		SDL_SetRenderDrawColor(m_renderer, 255,255,0, SDL_ALPHA_OPAQUE);
-
-		SDL_RenderDrawPoint(m_renderer, dst.x, dst.y);
 	}
 
 	void init(SDL_Window *win, SDL_Renderer *ren)

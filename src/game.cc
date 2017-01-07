@@ -289,7 +289,6 @@ private:
 		if (dequeueFront)
 		{
 			m_particles.pop_front();
-			printf("BORT!\n");
 		}
 	}
 

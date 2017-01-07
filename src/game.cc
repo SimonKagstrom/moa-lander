@@ -45,7 +45,18 @@ public:
 	{
 		double secsSinceLast = msSinceLast / 1000.0;
 
-		updateLander(secsSinceLast);
+		if (m_state == GAME_ON)
+		{
+			updateLander(secsSinceLast);
+		}
+		else
+		{
+			// Wait until all particles are gone, then revert to the game
+			if (m_particles.size() == 0)
+			{
+				m_state = GAME_ON;
+			}
+		}
 		updateParticles(secsSinceLast);
 	}
 
@@ -55,12 +66,6 @@ public:
 
 		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
 
-		SDL_Rect dst;
-		dst.x = m_lander.m_position.x;
-		dst.y = windowHeight - m_lander.m_position.y;
-		dst.h = m_landerSize[1];
-		dst.w = m_landerSize[0];
-
 		SDL_SetRenderDrawColor(m_renderer, 0,0,0, SDL_ALPHA_OPAQUE);
 		SDL_RenderClear(m_renderer);
 
@@ -69,7 +74,10 @@ public:
 		drawLandingPads(windowHeight);
 		drawParticles(windowHeight);
 
-		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
+		if (m_state == GAME_ON)
+		{
+			drawLander(windowHeight);
+		}
 	}
 
 	void init(SDL_Window *win, SDL_Renderer *ren)
@@ -127,6 +135,7 @@ public:
 	}
 
 private:
+
 	void generateLandingPads(int windowWidth, int windowHeight)
 	{
 		Line start, end;
@@ -215,6 +224,18 @@ private:
 		}
 	}
 
+	void drawLander(unsigned int windowHeight)
+	{
+		SDL_Rect dst;
+
+		dst.x = m_lander.m_position.x;
+		dst.y = windowHeight - m_lander.m_position.y;
+		dst.h = m_landerSize[1];
+		dst.w = m_landerSize[0];
+
+		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
+	}
+
 	void drawParticles(unsigned int windowHeight)
 	{
 		for (auto &particle : m_particles)
@@ -300,14 +321,18 @@ private:
 
 		if (landerIsOnPad())
 		{
-			if (fabs(m_lander.m_velocity.dy) > fabs(gravity)/2)
-			{
-				printf("Kaboom! %.3f\n", m_lander.m_velocity.dy);
-			}
+			auto speed = m_lander.m_velocity.dy;
 
 			m_lander.m_velocity.dx = 0;
 			m_lander.m_velocity.dy = 0;
 			m_lander.m_angle = 0;
+
+			if (fabs(speed) > fabs(gravity)/2)
+			{
+				printf("Kaboom! %.3f\n", speed);
+				explode();
+				return;
+			}
 		}
 		else
 		{
@@ -327,6 +352,17 @@ private:
 
 		m_lander.m_position.y += m_lander.m_velocity.dy;
 		m_lander.m_position.x += m_lander.m_velocity.dx;
+	}
+
+	void explode()
+	{
+		m_state = EXPLODING;
+		for (int i = -90; i < 90; i+= 10)
+		{
+			Point particlePosition{m_lander.m_position.x + m_landerSize[0] / 2, m_lander.m_position.y - m_landerSize[1]};
+
+			addParticle(i, particlePosition, 8);
+		}
 	}
 
 	void addThrustFire()
@@ -374,8 +410,13 @@ private:
 		pos.y += velocity.dy;
 		pos.x += velocity.dx;
 	}
+	enum State
+	{
+		GAME_ON, EXPLODING
+	};
 
 	Lander m_lander;
+	enum State m_state{GAME_ON};
 
 	int m_acceleration;
 	int m_turning;

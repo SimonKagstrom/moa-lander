@@ -80,18 +80,29 @@ public:
 		m_window = win;
 		m_renderer = ren;
 		int windowWidth, windowHeight;
+		int w,h;
 
 		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
 
-		SDL_Surface *bmp = SDL_LoadBMP("lander.bmp");
+		SDL_Surface *landerBmp = SDL_LoadBMP("lander.bmp");
+		SDL_Surface *sparkBmp = SDL_LoadBMP("sparks.bmp");
 
-		if (!bmp)
+		if (!landerBmp || !sparkBmp)
 		{
-			printf("Can't load lander image\n");
+			printf("Can't load lander/sparks image\n");
 			exit(1);
 		}
 
-		m_landerSprite = SDL_CreateTextureFromSurface(m_renderer, bmp);
+		m_landerSprite = SDL_CreateTextureFromSurface(m_renderer, landerBmp);
+		m_sparkSprite = SDL_CreateTextureFromSurface(m_renderer, sparkBmp);
+
+		SDL_QueryTexture(m_landerSprite, NULL, NULL, &w, &h);
+		m_landerSize[0] = w;
+		m_landerSize[1] = h;
+
+		SDL_QueryTexture(m_sparkSprite, NULL, NULL, &w, &h);
+		m_sparkSize[0] = w;
+		m_sparkSize[1] = h;
 
 		generateLandingPads(windowWidth, windowHeight);
 		generateLandscape(windowWidth, windowHeight,
@@ -206,10 +217,17 @@ private:
 
 	void drawParticles(unsigned int windowHeight)
 	{
-		SDL_SetRenderDrawColor(m_renderer, 0,255,255, SDL_ALPHA_OPAQUE);
-
 		for (auto &particle : m_particles)
 		{
+			SDL_Rect dst;
+
+			dst.x = particle.m_position.x;
+			dst.y = windowHeight - particle.m_position.y;
+			dst.w = m_sparkSize[0];
+			dst.h = m_sparkSize[1];
+
+			SDL_RenderCopy(m_renderer, m_sparkSprite, NULL, &dst);
+
 			SDL_RenderDrawPoint(m_renderer, particle.m_position.x,
 					windowHeight - particle.m_position.y);
 		}
@@ -365,6 +383,7 @@ private:
 	SDL_Window *m_window;
 	SDL_Renderer *m_renderer;
 	SDL_Texture *m_landerSprite;
+	SDL_Texture *m_sparkSprite;
 	std::vector<struct Line> m_landscape;
 
 	std::vector<struct Point> m_stars;
@@ -372,7 +391,8 @@ private:
 
 	std::deque<Particle> m_particles;
 
-	unsigned int m_landerSize[2]{91,299};
+	unsigned int m_landerSize[2];
+	unsigned int m_sparkSize[2];
 };
 
 

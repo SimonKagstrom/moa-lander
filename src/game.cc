@@ -395,7 +395,7 @@ private:
 			return false;
 		}
 
-		if (fabs((m_lander.m_position.y - m_landerSize[1]) - first->begin.y) < 5)
+		if (fabs((m_lander.m_position.y - m_landerSize[1])) - first->begin.y < 5)
 		{
 			return true;
 		}

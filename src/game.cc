@@ -207,7 +207,7 @@ private:
 
 	void addParticle(double angle, const Point &where, double maxSpeed)
 	{
-		if (m_particles.size() > 30)
+		if (m_particles.size() > 40)
 		{
 			return;
 		}
@@ -395,6 +395,11 @@ private:
 
 		particlePosition.x = (m_lander.m_position.x + m_landerSize[0] / 2) + dx * m_landerSize[0];
 		particlePosition.y = m_lander.m_position.y + dy * m_landerSize[1];
+
+		if (m_particles.size() > 20)
+		{
+			return;
+		}
 
 		addParticle(angle, particlePosition, 4);
 	}

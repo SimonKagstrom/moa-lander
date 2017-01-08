@@ -54,7 +54,7 @@ public:
 			// Wait until all particles are gone, then revert to the game
 			if (m_particles.size() == 0)
 			{
-				m_state = GAME_ON;
+				resetGame();
 			}
 		}
 		updateParticles(secsSinceLast);
@@ -117,14 +117,21 @@ public:
 		generateLandscape(windowWidth, windowHeight,
 				m_pads[1].end.x, windowWidth, m_pads[0].end.y, windowHeight * 0.25);
 
-		m_lander.m_position = {m_pads[0].begin.x + (m_pads[0].end.x - m_pads[0].begin.x) / 3,
-				m_pads[0].begin.y + m_landerSize[1]};
-		m_lander.m_angle = 0;
+		resetGame();
 
 		generateStars(windowWidth, windowHeight);
 	}
 
 private:
+	void resetGame()
+	{
+		m_lander.m_position = {m_pads[0].begin.x + (m_pads[0].end.x - m_pads[0].begin.x) / 3,
+				m_pads[0].begin.y + m_landerSize[1]};
+		m_lander.m_angle = 0;
+
+		m_state = GAME_ON;
+	}
+
 	void generateStars(unsigned int windowWidth, unsigned int windowHeight)
 	{
 		// Stars

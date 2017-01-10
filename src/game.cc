@@ -7,8 +7,8 @@
 #include <SDL.h>
 #include <math.h>
 
-static double gravity = -9.8;
-static double accelerationPerSecond = 40;
+static double gravity = -4; // Sort of Mars gravity
+static double accelerationPerSecond = 20;
 
 class LandingPad
 {
@@ -340,7 +340,7 @@ private:
 			m_lander.m_velocity.dy = 0;
 			m_lander.m_angle = 0;
 
-			if (fabs(speed) > fabs(gravity)/2)
+			if (fabs(speed) > 8)
 			{
 				printf("Kaboom! %.3f\n", speed);
 				explode();

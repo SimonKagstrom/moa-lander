@@ -390,11 +390,14 @@ private:
 		auto angle = m_lander.m_angle + 180;
 		auto angleRad = (angle / 360.0) * 2 * M_PI;
 
+		double midX = m_lander.m_position.x + m_landerSize[0] / 2;
+		double midY = m_lander.m_position.y - m_landerSize[1] / 2;
+
 		double dx = sin(angleRad);
 		double dy = cos(angleRad);
 
-		particlePosition.x = (m_lander.m_position.x + m_landerSize[0] / 2) + dx * m_landerSize[0];
-		particlePosition.y = m_lander.m_position.y + dy * m_landerSize[1];
+		particlePosition.x = midX + dx * m_landerSize[0] / 2;
+		particlePosition.y = midY + dy * m_landerSize[1] / 2;
 
 		if (m_particles.size() > 20)
 		{

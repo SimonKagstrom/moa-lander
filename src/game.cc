@@ -45,11 +45,11 @@ public:
 	{
 		double secsSinceLast = msSinceLast / 1000.0;
 
-		if (m_state == GAME_ON)
+		if (m_state == GAME_ON || m_state == CARRYING_PERSON)
 		{
 			updateLander(secsSinceLast);
 		}
-		else
+		else if (m_state == EXPLODING || m_state == GAME_WON)
 		{
 			// Wait until all particles are gone, then revert to the game
 			if (m_particles.size() == 0)
@@ -73,8 +73,9 @@ public:
 		drawLandscape(windowHeight);
 		drawLandingPads(windowHeight);
 		drawParticles(windowHeight);
+		drawPerson(windowHeight);
 
-		if (m_state == GAME_ON)
+		if (m_state != EXPLODING)
 		{
 			drawLander(windowHeight);
 		}
@@ -91,15 +92,17 @@ public:
 
 		SDL_Surface *landerBmp = SDL_LoadBMP("lander.bmp");
 		SDL_Surface *sparkBmp = SDL_LoadBMP("sparks.bmp");
+		SDL_Surface *personBmp = SDL_LoadBMP("person.bmp");
 
-		if (!landerBmp || !sparkBmp)
+		if (!landerBmp || !sparkBmp || !personBmp)
 		{
-			printf("Can't load lander/sparks image\n");
+			printf("Can't load lander/sparks/person image\n");
 			exit(1);
 		}
 
 		m_landerSprite = SDL_CreateTextureFromSurface(m_renderer, landerBmp);
 		m_sparkSprite = SDL_CreateTextureFromSurface(m_renderer, sparkBmp);
+		m_personSprite = SDL_CreateTextureFromSurface(m_renderer, personBmp);
 
 		SDL_QueryTexture(m_landerSprite, NULL, NULL, &w, &h);
 		m_landerSize[0] = w;
@@ -108,6 +111,10 @@ public:
 		SDL_QueryTexture(m_sparkSprite, NULL, NULL, &w, &h);
 		m_sparkSize[0] = w;
 		m_sparkSize[1] = h;
+
+		SDL_QueryTexture(m_personSprite, NULL, NULL, &w, &h);
+		m_personSize[0] = w;
+		m_personSize[1] = h;
 
 		generateLandingPads(windowWidth, windowHeight);
 		generateLandscape(windowWidth, windowHeight,
@@ -129,13 +136,15 @@ private:
 				m_pads[0].begin.y + m_landerSize[1]};
 		m_lander.m_angle = 0;
 
+		m_personPosition = {m_pads[1].begin.x, m_pads[1].begin.y + m_personSize[1]};
+
 		m_state = GAME_ON;
 	}
 
 	void generateStars(unsigned int windowWidth, unsigned int windowHeight)
 	{
 		// Stars
-		for (unsigned i = 0; i < 20; i++)
+		for (unsigned i = 0; i < 40; i++)
 		{
 			Point star;
 
@@ -249,6 +258,23 @@ private:
 		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
 	}
 
+	void drawPerson(unsigned int windowHeight)
+	{
+		if (m_state == CARRYING_PERSON || m_state == GAME_WON)
+		{
+			return;
+		}
+
+		SDL_Rect dst;
+
+		dst.x = m_personPosition.x;
+		dst.y = windowHeight - m_personPosition.y;
+		dst.w = m_personSize[0];
+		dst.h = m_personSize[1];
+
+		SDL_RenderCopy(m_renderer, m_personSprite, NULL, &dst);
+	}
+
 	void drawParticles(unsigned int windowHeight)
 	{
 		for (auto &particle : m_particles)
@@ -261,9 +287,6 @@ private:
 			dst.h = m_sparkSize[1];
 
 			SDL_RenderCopy(m_renderer, m_sparkSprite, NULL, &dst);
-
-			SDL_RenderDrawPoint(m_renderer, particle.m_position.x,
-					windowHeight - particle.m_position.y);
 		}
 	}
 
@@ -332,7 +355,9 @@ private:
 
 		double angleRad = (m_lander.m_angle / 360.0) * 2 * M_PI;
 
-		if (landerIsOnPad())
+		int whichPad;
+
+		if ( (whichPad = landerIsOnPad()) )
 		{
 			auto speed = m_lander.m_velocity.dy;
 
@@ -344,6 +369,17 @@ private:
 			{
 				printf("Kaboom! %.3f\n", speed);
 				explode();
+				return;
+			}
+
+			if (whichPad == 2)
+			{
+				m_state = CARRYING_PERSON;
+			}
+
+			if (whichPad == 1 && m_state == CARRYING_PERSON)
+			{
+				gameWon();
 				return;
 			}
 		}
@@ -384,6 +420,21 @@ private:
 		}
 	}
 
+	void gameWon()
+	{
+		int windowWidth, windowHeight;
+
+		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
+
+		m_state = GAME_WON;
+		for (int i = -0; i < 360; i+= 20)
+		{
+			Point particlePosition{(double)windowWidth / 2, (double)windowHeight / 2 + 40};
+
+			addParticle(i, particlePosition, 8);
+		}
+	}
+
 	void addThrustFire()
 	{
 		Point particlePosition{m_lander.m_position.x, m_lander.m_position.y};
@@ -407,7 +458,7 @@ private:
 		addParticle(angle, particlePosition, 4);
 	}
 
-	bool landerIsOnPad()
+	int landerIsOnPad()
 	{
 		Point end;
 
@@ -419,15 +470,20 @@ private:
 
 		if (!first || !second)
 		{
-			return false;
+			return 0;
 		}
 
 		if (fabs((m_lander.m_position.y - m_landerSize[1])) - first->begin.y < 5)
 		{
-			return true;
+			if (m_lander.m_position.x >= m_pads[1].begin.x)
+			{
+				return 2;
+			}
+
+			return 1;
 		}
 
-		return false;
+		return 0;
 	}
 
 	bool landerIsOnLandscape()
@@ -482,7 +538,7 @@ private:
 	}
 	enum State
 	{
-		GAME_ON, EXPLODING
+		GAME_ON, CARRYING_PERSON, DROPPED_PERSON, EXPLODING, GAME_WON
 	};
 
 	Lander m_lander;
@@ -494,6 +550,8 @@ private:
 	SDL_Renderer *m_renderer;
 	SDL_Texture *m_landerSprite;
 	SDL_Texture *m_sparkSprite;
+	SDL_Texture *m_personSprite;
+	Point m_personPosition;
 	std::vector<struct Line> m_landscape;
 
 	std::vector<struct Point> m_stars;
@@ -503,6 +561,7 @@ private:
 
 	unsigned int m_landerSize[2];
 	unsigned int m_sparkSize[2];
+	unsigned int m_personSize[2];
 };
 
 

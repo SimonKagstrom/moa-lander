@@ -85,10 +85,7 @@ public:
 	{
 		m_window = win;
 		m_renderer = ren;
-		int windowWidth, windowHeight;
 		int w,h;
-
-		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
 
 		SDL_Surface *landerBmp = SDL_LoadBMP("lander.bmp");
 		SDL_Surface *sparkBmp = SDL_LoadBMP("sparks.bmp");
@@ -116,6 +113,19 @@ public:
 		m_personSize[0] = w;
 		m_personSize[1] = h;
 
+		resetGame();
+	}
+
+private:
+	void resetGame()
+	{
+		int windowWidth, windowHeight;
+		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
+
+		m_pads.clear();
+		m_landscape.clear();
+		m_stars.clear();
+
 		generateLandingPads(windowWidth, windowHeight);
 		generateLandscape(windowWidth, windowHeight,
 				0, m_pads[0].begin.x, windowHeight * 0.25, m_pads[0].begin.y);
@@ -124,14 +134,8 @@ public:
 		generateLandscape(windowWidth, windowHeight,
 				m_pads[1].end.x, windowWidth, m_pads[0].end.y, windowHeight * 0.25);
 
-		resetGame();
-
 		generateStars(windowWidth, windowHeight);
-	}
 
-private:
-	void resetGame()
-	{
 		m_lander.m_position = {m_pads[0].begin.x + (m_pads[0].end.x - m_pads[0].begin.x) / 3,
 				m_pads[0].begin.y + m_landerSize[1]};
 		m_lander.m_angle = 0;

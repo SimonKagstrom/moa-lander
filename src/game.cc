@@ -1,7 +1,7 @@
 #include <game.hh>
 
 #include <vector>
-#include <deque>
+#include <list>
 
 #include <stdio.h>
 #include <SDL.h>
@@ -207,7 +207,7 @@ private:
 
 	void addParticle(double angle, const Point &where, double maxSpeed)
 	{
-		if (m_particles.size() > 40)
+		if (m_particles.size() > 60)
 		{
 			return;
 		}
@@ -222,7 +222,7 @@ private:
 		p.m_position = where;
 		p.m_velocity.dx = sin(angleRad) * maxSpeed;
 		p.m_velocity.dy = cos(angleRad) * maxSpeed;
-		p.m_secsToLive = 1;
+		p.m_secsToLive = 1.5;
 
 		m_particles.push_back(p);
 	}
@@ -305,24 +305,24 @@ private:
 
 	void updateParticles(double secsSinceLast)
 	{
-		bool dequeueFront = false;
+		std::vector<std::list<Particle>::iterator> toErase;
 
-		for (auto &particle : m_particles)
+		for (auto particle = m_particles.begin(); particle != m_particles.end(); ++particle)
 		{
-			particle.m_secsToLive -= secsSinceLast;
-			if (particle.m_secsToLive < 0)
-			{
-				dequeueFront = true;
-			}
+			particle->m_velocity.dy += secsSinceLast * gravity;
+			particle->m_position.y += particle->m_velocity.dy;
+			particle->m_position.x += particle->m_velocity.dx;
 
-			particle.m_velocity.dy += secsSinceLast * gravity;
-			particle.m_position.y += particle.m_velocity.dy;
-			particle.m_position.x += particle.m_velocity.dx;
+			particle->m_secsToLive -= secsSinceLast;
+			if (particle->m_secsToLive < 0 || pointIsBelowLandscape(particle->m_position))
+			{
+				toErase.push_back(particle);
+			}
 		}
 
-		if (dequeueFront)
+		for (auto &it : toErase)
 		{
-			m_particles.pop_front();
+			m_particles.erase(it);
 		}
 	}
 
@@ -399,7 +399,7 @@ private:
 		particlePosition.x = midX + dx * m_landerSize[0] / 2;
 		particlePosition.y = midY + dy * m_landerSize[1] / 2;
 
-		if (m_particles.size() > 20)
+		if (m_particles.size() > 30)
 		{
 			return;
 		}
@@ -499,7 +499,7 @@ private:
 	std::vector<struct Point> m_stars;
 	std::vector<struct Line> m_pads;
 
-	std::deque<Particle> m_particles;
+	std::list<Particle> m_particles;
 
 	unsigned int m_landerSize[2];
 	unsigned int m_sparkSize[2];

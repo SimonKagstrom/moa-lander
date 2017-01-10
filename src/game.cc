@@ -214,7 +214,7 @@ private:
 	}
 
 
-	void addParticle(double angle, const Point &where, double maxSpeed)
+	void addParticle(double angle, const Point &where, double maxSpeed, double ttl)
 	{
 		if (m_particles.size() > 60)
 		{
@@ -231,7 +231,7 @@ private:
 		p.m_position = where;
 		p.m_velocity.dx = sin(angleRad) * maxSpeed;
 		p.m_velocity.dy = cos(angleRad) * maxSpeed;
-		p.m_secsToLive = 1.5;
+		p.m_secsToLive = ttl;
 
 		m_particles.push_back(p);
 	}
@@ -416,7 +416,7 @@ private:
 		{
 			Point particlePosition{m_lander.m_position.x + m_landerSize[0] / 2, m_lander.m_position.y - m_landerSize[1]};
 
-			addParticle(i, particlePosition, 8);
+			addParticle(i, particlePosition, 8, 3);
 		}
 	}
 
@@ -427,11 +427,11 @@ private:
 		SDL_GetWindowSize(m_window, &windowWidth, &windowHeight);
 
 		m_state = GAME_WON;
-		for (int i = -0; i < 360; i+= 20)
+		for (int i = -0; i < 360; i+= 5)
 		{
 			Point particlePosition{(double)windowWidth / 2, (double)windowHeight / 2 + 40};
 
-			addParticle(i, particlePosition, 8);
+			addParticle(i, particlePosition, 8, 10);
 		}
 	}
 
@@ -455,7 +455,7 @@ private:
 			return;
 		}
 
-		addParticle(angle, particlePosition, 4);
+		addParticle(angle, particlePosition, 4, 1.2);
 	}
 
 	int landerIsOnPad()

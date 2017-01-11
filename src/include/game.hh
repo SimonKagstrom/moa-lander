@@ -49,4 +49,6 @@ void handleInput(unsigned int mask);
 
 void display();
 
+void reset();
+
 void init(SDL_Window *win, SDL_Renderer *ren);

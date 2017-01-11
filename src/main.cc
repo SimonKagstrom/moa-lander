@@ -32,6 +32,8 @@ static bool gameLoop(uint32_t msSinceLast)
 		{
 			if (ev.key.keysym.sym == SDLK_SPACE)
 				keys &= ~Input::UP;
+			if (ev.key.keysym.sym == SDLK_r)
+				reset();
 			if (ev.key.keysym.sym == SDLK_LEFT)
 				keys &= ~Input::LEFT;
 			if (ev.key.keysym.sym == SDLK_RIGHT)

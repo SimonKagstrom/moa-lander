@@ -95,7 +95,6 @@ public:
 		resetGame();
 	}
 
-private:
 	void resetGame()
 	{
 		int windowWidth, windowHeight;
@@ -124,6 +123,7 @@ private:
 		m_state = GAME_ON;
 	}
 
+private:
 	void generateStars(unsigned int windowWidth, unsigned int windowHeight)
 	{
 		// Stars
@@ -588,6 +588,11 @@ void update(unsigned int timeSinceLast)
 void display()
 {
 	game.display();
+}
+
+void reset()
+{
+	game.resetGame();
 }
 
 void handleInput(unsigned int mask)

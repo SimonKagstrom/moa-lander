@@ -85,33 +85,12 @@ public:
 	{
 		m_window = win;
 		m_renderer = ren;
-		int w,h;
 
-		SDL_Surface *landerBmp = SDL_LoadBMP("lander.bmp");
-		SDL_Surface *sparkBmp = SDL_LoadBMP("sparks.bmp");
-		SDL_Surface *personBmp = SDL_LoadBMP("person.bmp");
+		m_landerImage = Image(m_renderer, "lander.bmp");
+		m_sparkImage = Image(m_renderer, "sparks.bmp");
+		m_personImage = Image(m_renderer, "person.bmp");
 
-		if (!landerBmp || !sparkBmp || !personBmp)
-		{
-			printf("Can't load lander/sparks/person image\n");
-			exit(1);
-		}
-
-		m_landerSprite = SDL_CreateTextureFromSurface(m_renderer, landerBmp);
-		m_sparkSprite = SDL_CreateTextureFromSurface(m_renderer, sparkBmp);
-		m_personSprite = SDL_CreateTextureFromSurface(m_renderer, personBmp);
-
-		SDL_QueryTexture(m_landerSprite, NULL, NULL, &w, &h);
-		m_landerSize[0] = w;
-		m_landerSize[1] = h;
-
-		SDL_QueryTexture(m_sparkSprite, NULL, NULL, &w, &h);
-		m_sparkSize[0] = w;
-		m_sparkSize[1] = h;
-
-		SDL_QueryTexture(m_personSprite, NULL, NULL, &w, &h);
-		m_personSize[0] = w;
-		m_personSize[1] = h;
+		m_curLanderSprite = m_landerImage.m_sprite;
 
 		resetGame();
 	}
@@ -137,10 +116,10 @@ private:
 		generateStars(windowWidth, windowHeight);
 
 		m_lander.m_position = {m_pads[0].begin.x + (m_pads[0].end.x - m_pads[0].begin.x) / 3,
-				m_pads[0].begin.y + m_landerSize[1]};
+				m_pads[0].begin.y + m_landerImage.m_size[1]};
 		m_lander.m_angle = 0;
 
-		m_personPosition = {m_pads[1].begin.x, m_pads[1].begin.y + m_personSize[1]};
+		m_personPosition = {m_pads[1].begin.x, m_pads[1].begin.y + m_personImage.m_size[1]};
 
 		m_state = GAME_ON;
 	}
@@ -168,12 +147,12 @@ private:
 
 		start.begin.x = windowWidth * 0.10;
 		start.begin.y = windowHeight * 0.20;
-		start.end.x = start.begin.x + m_landerSize[0] * 2;
+		start.end.x = start.begin.x + m_landerImage.m_size[0] * 2;
 		start.end.y = start.begin.y;
 
-		end.begin.x = windowWidth - m_landerSize[0] * 3;
+		end.begin.x = windowWidth - m_landerImage.m_size[0] * 3;
 		end.begin.y = windowHeight * 0.20;
-		end.end.x = end.begin.x + m_landerSize[0] * 2;
+		end.end.x = end.begin.x + m_landerImage.m_size[0] * 2;
 		end.end.y = end.begin.y;
 
 		m_pads.push_back(start);
@@ -256,10 +235,10 @@ private:
 
 		dst.x = m_lander.m_position.x;
 		dst.y = windowHeight - m_lander.m_position.y;
-		dst.h = m_landerSize[1];
-		dst.w = m_landerSize[0];
+		dst.h = m_landerImage.m_size[1];
+		dst.w = m_landerImage.m_size[0];
 
-		SDL_RenderCopyEx(m_renderer, m_landerSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
+		SDL_RenderCopyEx(m_renderer, m_curLanderSprite, NULL, &dst, m_lander.m_angle, NULL, SDL_FLIP_NONE);
 	}
 
 	void drawPerson(unsigned int windowHeight)
@@ -273,10 +252,10 @@ private:
 
 		dst.x = m_personPosition.x;
 		dst.y = windowHeight - m_personPosition.y;
-		dst.w = m_personSize[0];
-		dst.h = m_personSize[1];
+		dst.w = m_personImage.m_size[0];
+		dst.h = m_personImage.m_size[1];
 
-		SDL_RenderCopy(m_renderer, m_personSprite, NULL, &dst);
+		SDL_RenderCopy(m_renderer, m_personImage.m_sprite, NULL, &dst);
 	}
 
 	void drawParticles(unsigned int windowHeight)
@@ -287,10 +266,10 @@ private:
 
 			dst.x = particle.m_position.x;
 			dst.y = windowHeight - particle.m_position.y;
-			dst.w = m_sparkSize[0];
-			dst.h = m_sparkSize[1];
+			dst.w = m_sparkImage.m_size[0];
+			dst.h = m_sparkImage.m_size[1];
 
-			SDL_RenderCopy(m_renderer, m_sparkSprite, NULL, &dst);
+			SDL_RenderCopy(m_renderer, m_sparkImage.m_sprite, NULL, &dst);
 		}
 	}
 
@@ -418,7 +397,7 @@ private:
 		m_state = EXPLODING;
 		for (int i = -90; i < 90; i+= 10)
 		{
-			Point particlePosition{m_lander.m_position.x + m_landerSize[0] / 2, m_lander.m_position.y - m_landerSize[1]};
+			Point particlePosition{m_lander.m_position.x + m_landerImage.m_size[0] / 2, m_lander.m_position.y - m_landerImage.m_size[1]};
 
 			addParticle(i, particlePosition, 8, 3);
 		}
@@ -445,14 +424,14 @@ private:
 		auto angle = m_lander.m_angle + 180;
 		auto angleRad = (angle / 360.0) * 2 * M_PI;
 
-		double midX = m_lander.m_position.x + m_landerSize[0] / 2;
-		double midY = m_lander.m_position.y - m_landerSize[1] / 2;
+		double midX = m_lander.m_position.x + m_landerImage.m_size[0] / 2;
+		double midY = m_lander.m_position.y - m_landerImage.m_size[1] / 2;
 
 		double dx = sin(angleRad);
 		double dy = cos(angleRad);
 
-		particlePosition.x = midX + dx * m_landerSize[0] / 2;
-		particlePosition.y = midY + dy * m_landerSize[1] / 2;
+		particlePosition.x = midX + dx * m_landerImage.m_size[0] / 2;
+		particlePosition.y = midY + dy * m_landerImage.m_size[1] / 2;
 
 		if (m_particles.size() > 30)
 		{
@@ -466,7 +445,7 @@ private:
 	{
 		Point end;
 
-		end.x = m_lander.m_position.x + m_landerSize[0];
+		end.x = m_lander.m_position.x + m_landerImage.m_size[0];
 		end.y = m_lander.m_position.y;
 
 		Line *first = findLineForPoint(m_lander.m_position, m_pads);
@@ -477,7 +456,7 @@ private:
 			return 0;
 		}
 
-		if (fabs((m_lander.m_position.y - m_landerSize[1])) - first->begin.y < 5)
+		if (fabs((m_lander.m_position.y - m_landerImage.m_size[1])) - first->begin.y < 5)
 		{
 			if (m_lander.m_position.x >= m_pads[1].begin.x)
 			{
@@ -493,9 +472,9 @@ private:
 	bool landerIsOnLandscape()
 	{
 		Point upLeft{m_lander.m_position.x, m_lander.m_position.y};
-		Point upRight{m_lander.m_position.x + m_landerSize[0], m_lander.m_position.y};
-		Point downLeft{m_lander.m_position.x, m_lander.m_position.y - m_landerSize[1]};
-		Point downRight{m_lander.m_position.x + m_landerSize[0], m_lander.m_position.y - m_landerSize[1]};
+		Point upRight{m_lander.m_position.x + m_landerImage.m_size[0], m_lander.m_position.y};
+		Point downLeft{m_lander.m_position.x, m_lander.m_position.y - m_landerImage.m_size[1]};
+		Point downRight{m_lander.m_position.x + m_landerImage.m_size[0], m_lander.m_position.y - m_landerImage.m_size[1]};
 
 		if (pointIsBelowLandscape(upLeft) ||
 				pointIsBelowLandscape(upRight) ||
@@ -545,6 +524,33 @@ private:
 		GAME_ON, CARRYING_PERSON, DROPPED_PERSON, EXPLODING, GAME_WON
 	};
 
+
+	class Image
+	{
+	public:
+		Image()
+		{
+		}
+
+		Image(SDL_Renderer *ren, const char *filename)
+		{
+			auto bmp = SDL_LoadBMP(filename);
+
+			if (!bmp)
+			{
+				printf("Can't load image %s\n", filename);
+				exit(1);
+			}
+
+			m_sprite = SDL_CreateTextureFromSurface(ren, bmp);
+
+			SDL_QueryTexture(m_sprite, NULL, NULL, &m_size[0], &m_size[1]);
+		}
+
+		SDL_Texture *m_sprite{nullptr};
+		int m_size[2]{0,0}; // [w,h]
+	};
+
 	Lander m_lander;
 	enum State m_state{GAME_ON};
 
@@ -552,9 +558,11 @@ private:
 	int m_turning;
 	SDL_Window *m_window;
 	SDL_Renderer *m_renderer;
-	SDL_Texture *m_landerSprite;
-	SDL_Texture *m_sparkSprite;
-	SDL_Texture *m_personSprite;
+
+	SDL_Texture *m_curLanderSprite;
+	Image m_landerImage;
+	Image m_sparkImage;
+	Image m_personImage;
 	Point m_personPosition;
 	std::vector<struct Line> m_landscape;
 
@@ -562,10 +570,6 @@ private:
 	std::vector<struct Line> m_pads;
 
 	std::list<Particle> m_particles;
-
-	unsigned int m_landerSize[2];
-	unsigned int m_sparkSize[2];
-	unsigned int m_personSize[2];
 };
 
 

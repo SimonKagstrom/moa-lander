@@ -87,10 +87,9 @@ public:
 		m_renderer = ren;
 
 		m_landerImage = Image(m_renderer, "lander.bmp");
+		m_landerFullImage = Image(m_renderer, "lander-full.bmp");
 		m_sparkImage = Image(m_renderer, "sparks.bmp");
 		m_personImage = Image(m_renderer, "person.bmp");
-
-		m_curLanderSprite = m_landerImage.m_sprite;
 
 		resetGame();
 	}
@@ -103,6 +102,8 @@ public:
 		m_pads.clear();
 		m_landscape.clear();
 		m_stars.clear();
+
+		m_curLanderSprite = m_landerImage.m_sprite;
 
 		generateLandingPads(windowWidth, windowHeight);
 		generateLandscape(windowWidth, windowHeight,
@@ -364,6 +365,7 @@ private:
 			if (whichPad == 2)
 			{
 				m_state = CARRYING_PERSON;
+				m_curLanderSprite = m_landerFullImage.m_sprite;
 			}
 
 			if (whichPad == 1 && m_state == CARRYING_PERSON)
@@ -567,6 +569,8 @@ private:
 
 	SDL_Texture *m_curLanderSprite;
 	Image m_landerImage;
+	Image m_landerFullImage;
+
 	Image m_sparkImage;
 	Image m_personImage;
 	Point m_personPosition;

@@ -17,6 +17,10 @@ add_custom_command(
    OUTPUT person.bmp
    COMMAND convert ${PROJECT_SOURCE_DIR}/person.xcf person.bmp
 )
+add_custom_command(
+   OUTPUT lander-full.bmp
+   COMMAND convert ${PROJECT_SOURCE_DIR}/lander-full.xcf lander-full.bmp
+)
 
 
 include_directories(
@@ -34,6 +38,7 @@ add_executable(moa-lander
 set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/lander.bmp)
 set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/sparks.bmp)
 set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/person.bmp)
+set_property(SOURCE src/game.cc APPEND PROPERTY OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/lander-full.bmp)
 
 target_link_libraries(moa-lander ${SDL2_LIBRARY})
 

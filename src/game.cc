@@ -176,10 +176,16 @@ private:
 			line.begin.x = x;
 			line.begin.y = y;
 
-			do
+			y = y - slopeHeight / 2 + rand() % slopeHeight;
+
+			if (y < 0)
 			{
-				y = y - slopeHeight / 2 + rand() % slopeHeight;
-			} while (y < 0 || y > windowHeight / 2);
+				y = rand() % 5;
+			}
+			if (y > windowHeight / 2)
+			{
+				y = (windowHeight / 2) - rand() % 5;
+			}
 
 			// Last one
 			if (i == nLines - 1)

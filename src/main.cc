@@ -20,7 +20,8 @@ static bool gameLoop(uint32_t msSinceLast)
 		if (ev.type == SDL_KEYDOWN)
 		{
 			if (ev.key.keysym.sym == SDLK_SPACE ||
-					ev.key.keysym.sym == SDLK_UP)
+					ev.key.keysym.sym == SDLK_UP ||
+			ev.key.keysym.sym == SDLK_f)
 				keys |= Input::UP;
 			if (ev.key.keysym.sym == SDLK_LEFT)
 				keys |= Input::LEFT;
@@ -32,7 +33,8 @@ static bool gameLoop(uint32_t msSinceLast)
 		if (ev.type == SDL_KEYUP)
 		{
 			if (ev.key.keysym.sym == SDLK_SPACE ||
-					ev.key.keysym.sym == SDLK_UP)
+					ev.key.keysym.sym == SDLK_UP ||
+					ev.key.keysym.sym == SDLK_f)
 				keys &= ~Input::UP;
 			if (ev.key.keysym.sym == SDLK_r)
 				reset();

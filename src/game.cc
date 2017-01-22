@@ -350,12 +350,13 @@ private:
 		if ( (whichPad = landerIsOnPad()) )
 		{
 			auto speed = m_lander.m_velocity.dy;
+			auto angle = m_lander.m_angle;
 
 			m_lander.m_velocity.dx = 0;
 			m_lander.m_velocity.dy = 0;
 			m_lander.m_angle = 0;
 
-			if (fabs(speed) > 8)
+			if (fabs(speed) > 8 || abs(angle) > 30)
 			{
 				printf("Kaboom! %.3f\n", speed);
 				explode();

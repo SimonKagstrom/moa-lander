@@ -512,13 +512,35 @@ private:
 		}
 
 		double highestY = fmax(p->begin.y, p->end.y);
+		double lowestY = fmin(p->begin.y, p->end.y);
 
-		if (point.y - highestY > 0)
+		if (point.y > highestY)
 		{
 			return false;
 		}
+		if (point.y < lowestY)
+		{
+			return true;
+		}
 
-		return true;
+		/*
+		 * Use the equation of the line,
+		 *
+		 *    y = k * x + m
+		 *
+		 * to find out if the point is below the line
+		 */
+		auto k = (p->end.y - p->begin.y) / (p->end.x - p->begin.x);
+		auto point_x_on_line = (point.x - p->begin.x);
+
+		auto line_y = k * point_x_on_line;
+
+		if (point.y < line_y)
+		{
+			return true;
+		}
+
+		return false;
 	}
 
 	void addGravity(double secsSinceLast, Point &pos, Vector &velocity)

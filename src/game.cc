@@ -21,6 +21,32 @@ public:
 	Point m_position;
 };
 
+class Image
+{
+public:
+	Image()
+	{
+	}
+
+	Image(SDL_Renderer *ren, const char *filename)
+	{
+		auto bmp = SDL_LoadBMP(filename);
+
+		if (!bmp)
+		{
+			printf("Can't load image %s\n", filename);
+			exit(1);
+		}
+
+		m_sprite = SDL_CreateTextureFromSurface(ren, bmp);
+
+		SDL_QueryTexture(m_sprite, NULL, NULL, &m_size[0], &m_size[1]);
+	}
+
+	SDL_Texture *m_sprite{nullptr};
+	int m_size[2]{0,0}; // [w,h]
+};
+
 class Game
 {
 public:
@@ -327,7 +353,7 @@ private:
 			particle->m_position.x += particle->m_velocity.dx;
 
 			particle->m_secsToLive -= secsSinceLast;
-			if (particle->m_secsToLive < 0 || pointIsBelowLandscape(particle->m_position))
+			if (particle->m_secsToLive < 0 || imageIsBelowLandscape(particle->m_position, m_sparkImage))
 			{
 				toErase.push_back(particle);
 			}
@@ -480,10 +506,15 @@ private:
 
 	bool landerIsOnLandscape()
 	{
-		Point upLeft{m_lander.m_position.x, m_lander.m_position.y};
-		Point upRight{m_lander.m_position.x + m_landerImage.m_size[0], m_lander.m_position.y};
-		Point downLeft{m_lander.m_position.x, m_lander.m_position.y - m_landerImage.m_size[1]};
-		Point downRight{m_lander.m_position.x + m_landerImage.m_size[0], m_lander.m_position.y - m_landerImage.m_size[1]};
+		return imageIsBelowLandscape(m_lander.m_position, m_landerImage);
+	}
+
+	bool imageIsBelowLandscape(const Point &point, const Image &image)
+	{
+		Point upLeft{point.x, point.y};
+		Point upRight{point.x + image.m_size[0], point.y};
+		Point downLeft{point.x, point.y - image.m_size[1]};
+		Point downRight{point.x + image.m_size[0], point.y - image.m_size[1]};
 
 		if (pointIsBelowLandscape(upLeft) ||
 				pointIsBelowLandscape(upRight) ||
@@ -555,32 +586,6 @@ private:
 		GAME_ON, CARRYING_PERSON, DROPPED_PERSON, EXPLODING, GAME_WON
 	};
 
-
-	class Image
-	{
-	public:
-		Image()
-		{
-		}
-
-		Image(SDL_Renderer *ren, const char *filename)
-		{
-			auto bmp = SDL_LoadBMP(filename);
-
-			if (!bmp)
-			{
-				printf("Can't load image %s\n", filename);
-				exit(1);
-			}
-
-			m_sprite = SDL_CreateTextureFromSurface(ren, bmp);
-
-			SDL_QueryTexture(m_sprite, NULL, NULL, &m_size[0], &m_size[1]);
-		}
-
-		SDL_Texture *m_sprite{nullptr};
-		int m_size[2]{0,0}; // [w,h]
-	};
 
 	Lander m_lander;
 	enum State m_state{GAME_ON};
